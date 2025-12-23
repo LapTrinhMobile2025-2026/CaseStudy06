@@ -7,12 +7,30 @@ void main() {
   ));
 }
 
-class Book {
-  String name;
-  bool isBorrowed; // true = Đang mượn, false = Còn trong kho
+// --- CLASS _Book ---
+class _Book {
+  final String _name;
+  bool _isBorrowed;
 
-  Book({required this.name, this.isBorrowed = false});
+  // 2. Constructor
+  _Book({required String name, bool isBorrowed = false})
+      : _name = name,
+        _isBorrowed = isBorrowed;
+
+  // 3. Getters
+  String get name => _name;
+  bool get isBorrowed => _isBorrowed;
+
+  // 4. Methods
+  void muonSach() {
+    _isBorrowed = true;
+  }
+
+  void traSach() {
+    _isBorrowed = false;
+  }
 }
+// ---------------------------------------------
 
 class LibraryHomePage extends StatefulWidget {
   const LibraryHomePage({super.key});
@@ -27,20 +45,20 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
 
   final List<String> users = ["Nguyễn Văn An", "Nguyễn Văn Be", "Lê Thị Chao"];
 
-  // Kho sách cố định ban đầu
-  final List<Book> books = [
-    Book(name: "Cấu trúc dữ liệu và giải thuật", isBorrowed: true),
-    Book(name: "An toàn thông tin", isBorrowed: false),
-    Book(name: "Lập trình Android", isBorrowed: false),
-    Book(name: "Cấu trúc dữ liệu", isBorrowed: false),
-    Book(name: "Trí tuệ nhân tạo", isBorrowed: true),
-    Book(name: "Lịch sử văn minh", isBorrowed: false),
+  // Kho sách
+  final List<_Book> books = [
+    _Book(name: "Cấu trúc dữ liệu và giải thuật", isBorrowed: true),
+    _Book(name: "An toàn thông tin", isBorrowed: false),
+    _Book(name: "Lập trình Android", isBorrowed: false),
+    _Book(name: "Cấu trúc dữ liệu", isBorrowed: false),
+    _Book(name: "Trí tuệ nhân tạo", isBorrowed: true),
+    _Book(name: "Lịch sử văn minh", isBorrowed: false),
   ];
 
-  // --- LOGIC MỚI: MƯỢN SÁCH TỪ KHO ---
+  // --- MƯỢN SÁCH TỪ KHO ---
   void _showBorrowDialog() {
-    // 1. Lọc ra danh sách sách CHƯA ĐƯỢC MƯỢN
-    List<Book> availableBooks = books.where((b) => !b.isBorrowed).toList();
+    // Lọc ra danh sách sách CHƯA ĐƯỢC MƯỢN
+    List<_Book> availableBooks = books.where((b) => !b.isBorrowed).toList();
 
     showDialog(
       context: context,
@@ -62,13 +80,11 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
                   title: Text(book.name),
                   trailing: const Icon(Icons.add_circle_outline, color: Colors.blue),
                   onTap: () {
-                    // LOGIC MƯỢN SÁCH
                     setState(() {
-                      book.isBorrowed = true; // Chuyển thành đang mượn
+                      book.muonSach();
                     });
-                    Navigator.pop(context); // Đóng popup
+                    Navigator.pop(context);
 
-                    // Hiện thông báo nhỏ
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Đã mượn: ${book.name}")),
                     );
@@ -94,24 +110,20 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
     });
   }
 
-  // --- GIAO DIỆN ---
-
   // Trang 1: Quản lý
   Widget _buildManagerScreen() {
-    // Lọc sách đang mượn để hiển thị
     final borrowedBooks = books.where((b) => b.isBorrowed).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Thông tin người dùng
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Người mượn:", style: TextStyle(color: Colors.grey)),
+                const Text("Nhân viên:", style: TextStyle(color: Colors.grey)),
                 Text(users[_currentUserIndex], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
@@ -120,7 +132,6 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
         ),
         const Divider(height: 30, thickness: 1),
 
-        // Danh sách đang mượn
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,18 +144,19 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
                     : ListView.builder(
                   itemCount: borrowedBooks.length,
                   itemBuilder: (context, index) {
+                    final book = borrowedBooks[index];
                     return Card(
                       color: Colors.blue[50],
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
                         leading: const Icon(Icons.bookmark, color: Colors.blue),
-                        title: Text(borrowedBooks[index].name),
+                        title: Text(book.name),
                         trailing: IconButton(
                           icon: const Icon(Icons.remove_circle, color: Colors.red),
                           onPressed: () {
-                            // Nút trả sách nhanh
+                            // Nút trả sách nhanh (Sử dụng Method)
                             setState(() {
-                              borrowedBooks[index].isBorrowed = false;
+                              book.traSach();
                             });
                           },
                         ),
@@ -157,7 +169,6 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
           ),
         ),
 
-        // Nút Mượn Sách
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -174,7 +185,7 @@ class _LibraryHomePageState extends State<LibraryHomePage> {
     );
   }
 
-  // Trang 2: Xem tất cả sách (Kho sách)
+  // Trang 2: Kho sách
   Widget _buildAllBooksScreen() {
     return ListView.builder(
       itemCount: books.length,
